@@ -992,12 +992,16 @@ public class Property //added accessors for hotels and houses, Zach's overloaded
     {
         return hasHotel;
     }
-    
+    public boolean getIsMortgaged()
+    {
+        return isMortgaged;
+    }
     
     
     
     //modifiers -- might not be necessary (might be used to do a trade)
-          
+    
+
     public void setOwner(String ownerName)
     {
         owner = ownerName;
@@ -1009,8 +1013,15 @@ public class Property //added accessors for hotels and houses, Zach's overloaded
         //TODO:
     }
     
-    public void mortgage()
+    public void mortgage(Player tiddlywinks)
     {
-        //TODO:
+        tiddlywinks.setCashMoney(tiddlywinks.getCashMoney() + this.getMortgagePrice());
+        isMortgaged = true;
+    }
+    
+    public void buyBack(Player tiddlywinks)
+    {
+        tiddlywinks.setCashMoney(tiddlywinks.getCashMoney() - this.getMortgagePrice());
+        isMortgaged = false;
     }
 }

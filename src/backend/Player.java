@@ -1,6 +1,6 @@
 package backend;
 
-public class Player //added getOwnedPropNames, getOwnedProperty, turnsInJail, getTurnsInJail, setTurnsInJail,
+public class Player //
 {
     private String name;
     private int position;//the array index of the position in the board
@@ -11,6 +11,8 @@ public class Player //added getOwnedPropNames, getOwnedProperty, turnsInJail, ge
     private boolean isBankrupt;
     private int jailPasses;
     private int turnsInJail;
+    private int numHouses;
+    private int numHotels;
     
     public Player(int n)
     {
@@ -22,7 +24,9 @@ public class Player //added getOwnedPropNames, getOwnedProperty, turnsInJail, ge
         owned = new Property[0];
         isBankrupt = false;
         jailPasses = 0;
-        turnsInJail = -1;
+        turnsInJail = 0;
+        numHouses = 0;
+        numHotels = 0;
     }
     
     //accessors
@@ -31,6 +35,37 @@ public class Player //added getOwnedPropNames, getOwnedProperty, turnsInJail, ge
         return name;
     }
     
+    public int getHouses()//TODO: calculate by looking at the properties
+    {
+        return numHouses;    
+    }
+    
+    public int getHotels()//TODO: calculate by looking at the properties
+    {
+        return numHotels;
+    }
+    
+    public void buyAHouse()
+    {
+        numHouses++;
+    }
+    
+    public void buyAHotel()
+    {
+        numHotels++;
+    }
+    
+    public void sellAHouse()
+    {
+        if (numHouses > 0)
+            numHouses--;
+    }
+    
+    public void sellAHotel()
+    {
+        if (numHotels > 0)
+            numHotels--;
+    }
     public int getPosition()
     {
         return position;
@@ -77,12 +112,12 @@ public class Player //added getOwnedPropNames, getOwnedProperty, turnsInJail, ge
         return jailPasses;
     }
     
-    public String getOwnedPropNames()
+    public String[] getOwnedPropNames()
     {
-        String opn = "";
+        String[] opn = new String[this.getNumPropertiesOwned()];
         for(int johnson = 0; johnson < this.getNumPropertiesOwned(); johnson++)
         {
-            opn += owned[johnson].getName() + ", ";
+            opn[johnson] = owned[johnson].getName() + ", ";
         }
         
         return opn;
@@ -158,8 +193,6 @@ public class Player //added getOwnedPropNames, getOwnedProperty, turnsInJail, ge
     {
         turnsInJail = t;
     }
-    
-    
     
     public void addProperty(String propName)
     {

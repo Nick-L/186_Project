@@ -13,21 +13,28 @@ import javax.imageio.ImageIO;
 import backend.Board;
 import backend.Card;
 import backend.Player;
+import backend.Property;
 import main.GamePanel;
 import images.Background;
 
 public class MainState extends GameState {
 
 	private Background board;
+	private boolean isAProperty = false;
 	private Board backendBoard;
+	private String drawnCardString;
+	private String flavorText1;
+	private String flavorText2;
+	private String flavorText3;
 	private Card drawnCard;
+	private Font cardTextFont = new Font("Arial", Font.PLAIN, 14);
 	private ArrayList<Integer> mortgagingPropList = new ArrayList<Integer>();
 	private boolean mortgaging = false;
 	private boolean buyingHouses = false;
 	private boolean cardDrawn = false;
 	private String[] mainChoices = new String[] {"Roll", "Buy Property", "Morgage", "Trade", "Buy House", "End Turn"};
-	private String[] tradeChoices = new String[] {"property1", "property2", "property3", "property4", "property5"};
-	private String[] tradeChoices2 = new String[] {"Anthon's House", "Anthon's Dog", "Anthony's Car", "Anthony's Phone"};
+	private String[] tradeChoices;
+	private String[] tradeChoices2;
 	private Font buttonFont = new Font("Arial", Font.BOLD, 20);
 	private int tradeChoice = 0;
 	private int tradeStage = 0;
@@ -87,7 +94,7 @@ public class MainState extends GameState {
 				e.printStackTrace();
 			}
 		}
-		backendBoard = new Board();
+		backendBoard = new Board(2);
 
 		
 	}
@@ -180,7 +187,7 @@ public class MainState extends GameState {
 	}
 	
 	
-	//Helper Method to draw buttons 
+	//Helper Method to draw buttons for main game menu
 	private void drawButtons(Graphics2D g){
 		for(int i = 0; i < mainChoices.length; i++){
 			//Button Outer
@@ -448,19 +455,27 @@ public class MainState extends GameState {
 			
 			else if(currentChoice == 1){
 				//Buy Property
-				//TODO
+				if(isBuyable()){
+					players.get(currentPlayer).setCashMoney(players.get(currentPlayer).getCashMoney() - backendBoard.getProperty(players.get(currentPlayer).getPosition()).getPurchasePrice());
+					players.get(currentPlayer).addProperty(backendBoard.getPositionName(players.get(currentPlayer).getPosition()));
+					backendBoard.getProperty(players.get(currentPlayer).getPosition()).setOwner(players.get(currentPlayer).getName());
+				}
+				else{
+					
+				}
 			}
 			
 			else if(currentChoice == 2){
 				//MortgageProperty
 				mortgaging = true;
+				tradeChoices = players.get(currentPlayer).getOwnedPropNames();
 				
 			}
 			
 			else if(currentChoice == 3){
 				//Trade
 				tradeSelected = true;
-				//tradeChoices = players.get(currentPlayer)//get property names
+				tradeChoices = players.get(currentPlayer).getOwnedPropNames();
 				
 				
 				
@@ -468,8 +483,8 @@ public class MainState extends GameState {
 			
 			else if(currentChoice == 4){
 				//Buy House
-				//TODO
 				buyingHouses = true;
+				tradeChoices = players.get(currentPlayer).getOwnedPropNames();
 				
 			}
 			else if(currentChoice == 5){
@@ -556,7 +571,12 @@ public class MainState extends GameState {
 			//Select player to trade with
 			else if(tradeStage == 1){
 				if(tradeChoice < players.size()){
-					
+					if(tradeChoice >= currentPlayer){
+						tradeChoices2 = players.get(tradeChoice + 1).getOwnedPropNames();
+					}
+					else{
+						tradeChoices2 = players.get(tradeChoice + 1).getOwnedPropNames();
+					}
 				}
 				else if(tradeChoice == players.size() - 1){
 					tradeStage--;
@@ -680,11 +700,19 @@ public class MainState extends GameState {
 	private void drawCardDisplay(Graphics2D g){
 		g.setColor(Color.LIGHT_GRAY);
 		g.fillRect(150, 300, 500, 100);
-		g.setFont(tradeChoicesFont);
+		g.setFont(cardTextFont);
 		g.setColor(Color.BLACK);
 		
 		//TODO add card text below
-		g.drawString("this is where card text will be", 160, 340);
+		if(flavorText1 != null){
+			g.drawString(flavorText1, 160, 330);
+		}
+		if(flavorText2 != null){
+			g.drawString(flavorText2, 160, 350);
+		}
+		if(flavorText3 != null){
+			g.drawString(flavorText3, 160, 370);
+		}
 		g.drawString("Press enter to continue", 160, 390);
 	}
 
@@ -884,16 +912,23 @@ public class MainState extends GameState {
 	}
 	
 	private void checkPosition(){
+		isAProperty = false;
 		if(backendBoard.getPositionName(players.get(currentPlayer).getPosition()) == "Go"){
 			//add $200
 			players.get(currentPlayer).setCashMoney(players.get(currentPlayer).getCashMoney() + 200);
 		}
 		else if(backendBoard.getPositionName(players.get(currentPlayer).getPosition()) == "Community Chest"){
 			drawnCard = backendBoard.drawCommunity();
+			drawnCard.play(players.get(currentPlayer), dice.nextInt(31), players);
+			drawnCardString = drawnCard.getFlavorText();
+			splitFlavorText(drawnCardString);
 			cardDrawn = true;
 		}
 		else if(backendBoard.getPositionName(players.get(currentPlayer).getPosition()) == "Chance"){
 			drawnCard = backendBoard.drawChance();
+			drawnCard.play(players.get(currentPlayer), dice.nextInt(31), players);
+			drawnCardString = drawnCard.getFlavorText();
+			splitFlavorText(drawnCardString);
 			cardDrawn = true;
 		}
 		else if(backendBoard.getPositionName(players.get(currentPlayer).getPosition()) == "Panda Express"){
@@ -905,6 +940,7 @@ public class MainState extends GameState {
 		}
 		else if(backendBoard.getPositionName(players.get(currentPlayer).getPosition()) == "Scholarship Fund"){
 			//add money plus taxes and stuff
+			players.get(currentPlayer).setCashMoney(players.get(currentPlayer).getCashMoney() + 400);
 		}
 		else if(backendBoard.getPositionName(players.get(currentPlayer).getPosition()) == "Go to Academic Probation"){
 			//send to jail
@@ -914,10 +950,78 @@ public class MainState extends GameState {
 			players.get(currentPlayer).setCashMoney(players.get(currentPlayer).getCashMoney() - 75);
 		}
 		else{
-			//TODO
-			//on a property and can buy not sure how to access
+			//on a property and can buy/must pay rent etc. not sure how to access
+			isAProperty = true;
+			if(backendBoard.getProperty(players.get(currentPlayer).getPosition()).getOwner() == "None" || backendBoard.getProperty(players.get(currentPlayer).getPosition()).getOwner() == players.get(currentPlayer).getName()){
+				//able to buy or on own property no action from landing on
+			}
+			else{
+				int rentAmmount = backendBoard.getProperty(players.get(currentPlayer).getPosition()).getCurrentRent();
+				String ownerName = backendBoard.getProperty(players.get(currentPlayer).getPosition()).getOwner();
+				players.get(currentPlayer).setCashMoney(players.get(currentPlayer).getCashMoney() - rentAmmount);
+				for(int i = 0; i < players.size(); i++){
+					if(ownerName.equals(players.get(i).getName())){
+						players.get(i).setCashMoney(players.get(i).getCashMoney() + rentAmmount);
+					}
+				}
+				
+			}
 		}
 		
+	}
+	
+	private void splitFlavorText(String original){
+		int length = original.length();
+		if(length < 60){
+			flavorText1 = original;
+			flavorText2 = null;
+			flavorText3 = null;
+		}
+		else if(length < 120){
+			for(int i = 50; i < 60; i++){
+				if(original.charAt(i) == ' '){
+					flavorText1 = original.substring(0, i);
+					flavorText2 = original.substring(i + 1, length - 1);
+					flavorText3 = null;
+					i = 90;
+				}
+			}
+		}
+		else{
+			int start = 0;
+			for(int i = 50; i < 60; i++){
+				if(original.charAt(i) == ' '){
+					flavorText1 = original.substring(0, i);
+					start = i;
+					i = 90;
+				}
+			}
+			for(int j = start + 50; j < 120; j++){
+				if(original.charAt(j) == ' '){
+					flavorText2 = original.substring(start + 1, j);
+					flavorText3 = original.substring(j + 1);
+					j = 190;
+				}
+			}
+			
+		}
+		
+	}
+	
+	private boolean isBuyable(){
+		//if it is a property
+		if(isAProperty){
+			//if it is unowned
+			Property temp = backendBoard.getProperty(players.get(currentPlayer).getPosition());
+			if(temp.getOwner().equals("None")){
+				//if you have the money
+				if(players.get(currentPlayer).getCashMoney() > temp.getPurchasePrice()){
+					return true;
+				}
+			}
+		}
+		
+		return false;
 	}
 	
 	
