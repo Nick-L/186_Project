@@ -26,6 +26,7 @@ public class MainState extends GameState {
 	private String flavorText1;
 	private String flavorText2;
 	private String flavorText3;
+	private int playerIndex;
 	private Card drawnCard;
 	private Font cardTextFont = new Font("Arial", Font.PLAIN, 14);
 	private ArrayList<Integer> mortgagingPropList = new ArrayList<Integer>();
@@ -245,10 +246,20 @@ public class MainState extends GameState {
 	private void drawPlayer(Graphics2D g){
 		for(int i = 0; i < PlayerSelectState.numberOfPlayers; i++){
 			if(!(players.get(i).getPosition() == players.get(currentPlayer).getPosition())){
-				g.drawImage(playerPieces[i], xCoords[players.get(i).getPosition()], yCoords[players.get(i).getPosition()], 50, 50, null);
+				if(players.get(i).isInJail()){
+					g.drawImage(playerPieces[i], 30, 690, 50, 50, null);
+				}
+				else{
+					g.drawImage(playerPieces[i], xCoords[players.get(i).getPosition()], yCoords[players.get(i).getPosition()], 50, 50, null);
+				}
 			}
 		}
-		g.drawImage(playerPieces[currentPlayer], xCoords[players.get(currentPlayer).getPosition()], yCoords[players.get(currentPlayer).getPosition()], 50, 50, null);
+		if(players.get(currentPlayer).isInJail()){
+			g.drawImage(playerPieces[currentPlayer], 30, 690, 50, 50, null);
+		}
+		else{
+			g.drawImage(playerPieces[currentPlayer], xCoords[players.get(currentPlayer).getPosition()], yCoords[players.get(currentPlayer).getPosition()], 50, 50, null);
+		}
 	}
 	
 	//initializes x y coordinates for drawing pieces.
@@ -449,8 +460,15 @@ public class MainState extends GameState {
 		if(k == KeyEvent.VK_ENTER){
 			if(currentChoice == 0){
 				//Roll
-				roll();
-				checkPosition();
+				if(canRoll){
+					if(players.get(currentPlayer).isInJail()){
+						jailRoll();
+					}
+					else{
+						roll();
+						checkPosition();
+					}
+				}
 			}
 			
 			else if(currentChoice == 1){
@@ -572,10 +590,12 @@ public class MainState extends GameState {
 			else if(tradeStage == 1){
 				if(tradeChoice < players.size()){
 					if(tradeChoice >= currentPlayer){
+						playerIndex = tradeChoice + 1;
 						tradeChoices2 = players.get(tradeChoice + 1).getOwnedPropNames();
 					}
 					else{
-						tradeChoices2 = players.get(tradeChoice + 1).getOwnedPropNames();
+						playerIndex = tradeChoice;
+						tradeChoices2 = players.get(tradeChoice).getOwnedPropNames();
 					}
 				}
 				else if(tradeChoice == players.size() - 1){
@@ -610,7 +630,6 @@ public class MainState extends GameState {
 			//Review and accept trade
 			else if(tradeStage == 3){
 				if(tradeChoice == 1){
-					//TODO
 					finalizeTrade();
 				}
 				if(tradeChoice == 0){
@@ -624,7 +643,20 @@ public class MainState extends GameState {
 	
 	private void finalizeTrade(){
 		//TODO
-		
+		//current Player remove and add
+		for(int i = 0; i < tradeChoices2.length; i++){
+			players.get(currentPlayer).addProperty(tradeChoices2[i]);
+		}
+		for(int i = 0; i < tradeChoices.length; i++){
+			players.get(currentPlayer).removeProperty(tradeChoices[i]);
+		}
+		//other player remove and add
+		for(int i = 0; i < tradeChoices.length; i++){
+			players.get(playerIndex).addProperty(tradeChoices[i]);
+		}
+		for(int i = 0; i < tradeChoices2.length; i++){
+			players.get(playerIndex).removeProperty(tradeChoices2[i]);
+		}
 		tradeSelected = false;
 	}
 	
@@ -680,11 +712,11 @@ public class MainState extends GameState {
 
 	private void roll(){
 		if(canRoll){
-			dice1 = dice.nextInt(6) + 1;
-			dice2 = dice.nextInt(6) + 1;
+			dice1 = 0;//dice.nextInt(6) + 1;
+			dice2 = 1;//dice.nextInt(6) + 1;
 			int newPosition = players.get(currentPlayer).getPosition() + dice1 + dice2;
 			if(newPosition > 39){
-				newPosition = 0;
+				newPosition = newPosition - 39;
 				players.get(currentPlayer).setCashMoney(players.get(currentPlayer).getCashMoney() + 200);
 			}
 			players.get(currentPlayer).setPosition(newPosition);
@@ -703,7 +735,6 @@ public class MainState extends GameState {
 		g.setFont(cardTextFont);
 		g.setColor(Color.BLACK);
 		
-		//TODO add card text below
 		if(flavorText1 != null){
 			g.drawString(flavorText1, 160, 330);
 		}
@@ -717,9 +748,6 @@ public class MainState extends GameState {
 	}
 
 	private void drawMortgagingMenu(Graphics2D g){
-		//TODO - add mortgage values and stuff
-		
-		
 		//Draw Menu Boarder
 		g.setColor(Color.BLUE);
 		g.fillRect(140, 150, 500, 400);
@@ -740,7 +768,7 @@ public class MainState extends GameState {
 			else{
 				g.setColor(Color.BLACK);
 			}
-			g.drawString(tradeChoices[i], 150, 250 + (20 * i));
+			g.drawString(tradeChoices[i] + " $" + players.get(currentPlayer).getOwnedProperty(tradeChoices[i]).getMortgagePrice(), 150, 250 + (20 * i));
 		}
 		
 		//draw cancel button
@@ -771,10 +799,6 @@ public class MainState extends GameState {
 	}
 	
 	private void drawBuyHousesMenu(Graphics2D g){
-		//TODO - add house costs and stuff
-		
-		
-		
 		//Draw Menu Boarder
 		g.setColor(Color.BLUE);
 		g.fillRect(140, 150, 500, 400);
@@ -789,13 +813,13 @@ public class MainState extends GameState {
 		//draw the current players properties as choices to select
 		for(int i = 0; i < tradeChoices.length; i++){
 			g.setFont(tradeChoicesFont);
-			if(tradeChoice == i){
+			if(tradeChoice == i || mortgagingPropList.contains(i)){
 				g.setColor(Color.MAGENTA);
 			}
 			else{
 				g.setColor(Color.BLACK);
 			}
-			g.drawString(tradeChoices[i], 150, 250 + (20 * i));
+			g.drawString(tradeChoices[i] + " $" + players.get(currentPlayer).getOwnedProperty(tradeChoices[i]).getHouseCost(), 150, 250 + (20 * i));
 		}
 		
 		//draw cancel button
@@ -828,7 +852,6 @@ public class MainState extends GameState {
 	}
 
 	private void mortgagingMenuKeyOprions(int k){
-		//TODO
 		if(k == KeyEvent.VK_UP){
 			if(System.nanoTime() > previousTime + WAIT){
 				tradeChoice--;
@@ -859,18 +882,20 @@ public class MainState extends GameState {
 			previousTime = System.nanoTime();
 		}
 		if(k == KeyEvent.VK_ENTER){
-			//TODO
-			if(tradeChoice == tradeChoices.length){
+			if(tradeChoice < tradeChoices.length){
+				mortgagingPropList.add(tradeChoice);
+			}
+			else if(tradeChoice == tradeChoices.length){
 				mortgaging = false;
 			}
 			else if(tradeChoice == tradeChoices.length + 1){
-				//TODO - mortgage the property
+				mortgageTheProperties();
+				mortgaging = false;
 			}
 		}
 	}
 	
 	private void buyingHousesKeyOptions(int k){
-		//TODO
 		if(k == KeyEvent.VK_UP){
 			if(System.nanoTime() > previousTime + WAIT){
 				tradeChoice--;
@@ -901,12 +926,14 @@ public class MainState extends GameState {
 			previousTime = System.nanoTime();
 		}
 		if(k == KeyEvent.VK_ENTER){
-			//TODO
-			if(tradeChoice == tradeChoices.length){
+			if(tradeChoice < tradeChoices.length){
+				mortgagingPropList.add(tradeChoice);
+			}
+			else if(tradeChoice == tradeChoices.length){
 				buyingHouses = false;
 			}
 			else if(tradeChoice == tradeChoices.length + 1){
-				//TODO - mortgage the property
+				buyHouses();
 			}
 		}
 	}
@@ -914,8 +941,7 @@ public class MainState extends GameState {
 	private void checkPosition(){
 		isAProperty = false;
 		if(backendBoard.getPositionName(players.get(currentPlayer).getPosition()) == "Go"){
-			//add $200
-			players.get(currentPlayer).setCashMoney(players.get(currentPlayer).getCashMoney() + 200);
+			//200 is added else where
 		}
 		else if(backendBoard.getPositionName(players.get(currentPlayer).getPosition()) == "Community Chest"){
 			drawnCard = backendBoard.drawCommunity();
@@ -944,6 +970,7 @@ public class MainState extends GameState {
 		}
 		else if(backendBoard.getPositionName(players.get(currentPlayer).getPosition()) == "Go to Academic Probation"){
 			//send to jail
+			players.get(currentPlayer).changeJailStatus();
 		}
 		else if(backendBoard.getPositionName(players.get(currentPlayer).getPosition()) == "Tuition Time"){
 			//remove $75
@@ -1024,5 +1051,48 @@ public class MainState extends GameState {
 		return false;
 	}
 	
+	private void jailRoll(){
+		dice1 = dice.nextInt(6) + 1;
+		dice2 = dice.nextInt(6) + 2;
+		
+		if(dice1 == dice2){
+			players.get(currentPlayer).changeJailStatus();
+			players.get(currentPlayer).setPosition(10);
+			players.get(currentPlayer).setTurnsInJail(0);
+		}
+		else{
+			players.get(currentPlayer).setTurnsInJail(players.get(currentPlayer).getTurnsInJail() + 1);
+		}
+		
+		if(players.get(currentPlayer).getTurnsInJail() > 3){
+			players.get(currentPlayer).changeJailStatus();
+			players.get(currentPlayer).setPosition(10);
+			players.get(currentPlayer).setTurnsInJail(0);
+		}
+		canRoll = false;
+		currentChoice = 5;
+	}
 	
+	private void mortgageTheProperties(){
+		for(int i = 0; i < mortgagingPropList.size(); i++){
+			players.get(currentPlayer).getOwnedProperty(tradeChoices[mortgagingPropList.get(i)]).mortgage(players.get(currentPlayer));
+			players.get(currentPlayer).removeProperty(players.get(currentPlayer).getOwnedProperty(tradeChoices[mortgagingPropList.get(i)]).getName());
+		}
+		
+		mortgagingPropList.clear();
+	}
+
+	private void buyHouses(){
+		for(int i = 0; i < mortgagingPropList.size(); i++){		
+			players.get(currentPlayer).getOwnedProperty(tradeChoices[mortgagingPropList.get(i)]).addHouse(players.get(currentPlayer));
+		}
+		
+		mortgagingPropList.clear();
+	}
+
+
+
+
+
+
 }

@@ -1008,9 +1008,35 @@ public class Property //added accessors for hotels and houses, Zach's overloaded
     }
     
     //other methods
-    public void addHouse()
+    public void addHouse(Player player)
     {
-        //TODO:
+        numHouses++;
+        if(numHouses == 1){
+        	cRent = rent1;
+        	player.buyAHouse();
+        	player.setCashMoney(player.getCashMoney() - houseCost);
+        }
+        if(numHouses == 2){
+        	cRent = rent2;
+        	player.buyAHouse();
+        	player.setCashMoney(player.getCashMoney() - houseCost);
+        }
+        if(numHouses == 3){
+        	cRent = rent3;
+        	player.buyAHouse();
+        	player.setCashMoney(player.getCashMoney() - houseCost);
+        }
+        if(numHouses == 4){
+        	cRent = rent4;
+        	player.buyAHouse();
+        	player.setCashMoney(player.getCashMoney() - houseCost);
+        }
+        if(numHouses == 5){
+        	hasHotel = true;
+        	cRent = hRent;
+        	player.buyAHotel();
+        	player.setCashMoney(player.getCashMoney() - houseCost);
+        }
     }
     
     public void mortgage(Player tiddlywinks)

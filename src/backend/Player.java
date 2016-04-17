@@ -1,5 +1,7 @@
 package backend;
 
+import java.util.ArrayList;
+
 public class Player //
 {
     private String name;
@@ -7,7 +9,7 @@ public class Player //
     private int cashMoney;
     private int netWorth;
     private boolean inJail;
-    private Property[] owned;
+    private ArrayList<Property> owned;
     private boolean isBankrupt;
     private int jailPasses;
     private int turnsInJail;
@@ -21,7 +23,7 @@ public class Player //
         cashMoney = 1500;
         netWorth = cashMoney;
         inJail = false;
-        owned = new Property[0];
+        owned = new ArrayList<Property>();
         isBankrupt = false;
         jailPasses = 0;
         turnsInJail = 0;
@@ -52,6 +54,7 @@ public class Player //
     
     public void buyAHotel()
     {
+    	numHouses = numHouses - 4;
         numHotels++;
     }
     
@@ -99,7 +102,7 @@ public class Player //
     
     public int getNumPropertiesOwned()
     {
-        return owned.length;
+        return owned.size();
     }
     
     public boolean getIsBankrupt()
@@ -117,7 +120,7 @@ public class Player //
         String[] opn = new String[this.getNumPropertiesOwned()];
         for(int johnson = 0; johnson < this.getNumPropertiesOwned(); johnson++)
         {
-            opn[johnson] = owned[johnson].getName() + ", ";
+            opn[johnson] = owned.get(johnson).getName();
         }
         
         return opn;
@@ -129,7 +132,7 @@ public class Player //
         boolean isThere = false;
         for(int byElijah = 0; byElijah < this.getNumPropertiesOwned(); byElijah++)
         {
-            thisPropertyIs = owned[byElijah];
+            thisPropertyIs = owned.get(byElijah);
             if(propName.equals(thisPropertyIs.getName()))
             {
                 isThere = true;
@@ -196,12 +199,13 @@ public class Player //
     
     public void addProperty(String propName)
     {
-        Property[] temp = new Property[owned.length + 1];
-	for(int gubbin = 0; gubbin < owned.length; gubbin++)
-	{
-		temp[gubbin] = owned[gubbin];
-	}
-	temp[owned.length] = new Property(propName);
-	owned = temp;
+    	Property temp = new Property(propName);
+    	owned.add(temp);
     }
+    
+    public void removeProperty(String toRemove){
+    	Property temp = new Property(toRemove);
+    	owned.remove(temp);
+    }
+    
 }
