@@ -197,15 +197,23 @@ public class Player //
         turnsInJail = t;
     }
     
-    public void addProperty(String propName)
+    public void addProperty(Property prop, Player player)
     {
-    	Property temp = new Property(propName);
-    	owned.add(temp);
+    	prop.setOwner(player.getName());
+    	owned.add(prop);
     }
     
-    public void removeProperty(String toRemove){
-    	Property temp = new Property(toRemove);
-    	owned.remove(temp);
+    public void removeProperty(Property toRemove){
+    	if(toRemove == null){
+    		System.out.println("toRemove is null");
+    		return;
+    	}
+    	for(int i = 0; i < owned.size(); i++){
+    		if(owned.get(i).getName() == toRemove.getName()){
+    			System.out.println("removed");
+    			owned.remove(i);
+    		}
+    	}
     }
     
 }

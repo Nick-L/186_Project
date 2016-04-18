@@ -475,7 +475,8 @@ public class MainState extends GameState {
 				//Buy Property
 				if(isBuyable()){
 					players.get(currentPlayer).setCashMoney(players.get(currentPlayer).getCashMoney() - backendBoard.getProperty(players.get(currentPlayer).getPosition()).getPurchasePrice());
-					players.get(currentPlayer).addProperty(backendBoard.getPositionName(players.get(currentPlayer).getPosition()));
+					Property buying = new Property(backendBoard.getPositionName(players.get(currentPlayer).getPosition()));
+					players.get(currentPlayer).addProperty(buying, players.get(currentPlayer));
 					backendBoard.getProperty(players.get(currentPlayer).getPosition()).setOwner(players.get(currentPlayer).getName());
 				}
 				else{
@@ -591,11 +592,23 @@ public class MainState extends GameState {
 				if(tradeChoice < players.size()){
 					if(tradeChoice >= currentPlayer){
 						playerIndex = tradeChoice + 1;
-						tradeChoices2 = players.get(tradeChoice + 1).getOwnedPropNames();
+						if(players.get(playerIndex).getOwnedPropNames() == null){
+							String[] temp = new String[] {"None"};
+							tradeChoices2 = temp;
+						}
+						else{
+							tradeChoices2 = players.get(playerIndex).getOwnedPropNames();
+						}
 					}
 					else{
 						playerIndex = tradeChoice;
-						tradeChoices2 = players.get(tradeChoice).getOwnedPropNames();
+						if(players.get(playerIndex).getOwnedPropNames() == null){
+							String[] temp = new String[] {"None"};
+							tradeChoices2 = temp;
+						}
+						else{
+							tradeChoices2 = players.get(playerIndex).getOwnedPropNames();
+						}
 					}
 				}
 				else if(tradeChoice == players.size() - 1){
@@ -642,22 +655,26 @@ public class MainState extends GameState {
 	}
 	
 	private void finalizeTrade(){
-		//TODO
-		//current Player remove and add
-		for(int i = 0; i < tradeChoices2.length; i++){
-			players.get(currentPlayer).addProperty(tradeChoices2[i]);
+		//add properties for both players
+		for(int i = 0; i < offer2.size(); i++){
+			Property adding = new Property(offer2.get(i));
+			players.get(currentPlayer).addProperty(adding, players.get(currentPlayer));
 		}
-		for(int i = 0; i < tradeChoices.length; i++){
-			players.get(currentPlayer).removeProperty(tradeChoices[i]);
+		for(int i = 0; i < offer.size(); i++){
+			Property adding = new Property(offer.get(i));
+			players.get(playerIndex).addProperty(adding, players.get(playerIndex));
 		}
-		//other player remove and add
-		for(int i = 0; i < tradeChoices.length; i++){
-			players.get(playerIndex).addProperty(tradeChoices[i]);
+		//remove property for both players
+		for(int i = 0; i < offer2.size(); i++){
+			players.get(playerIndex).removeProperty(players.get(currentPlayer).getOwnedProperty(offer2.get(i)));
 		}
-		for(int i = 0; i < tradeChoices2.length; i++){
-			players.get(playerIndex).removeProperty(tradeChoices2[i]);
+		for(int i = 0; i < offer.size(); i++){
+			players.get(currentPlayer).removeProperty(players.get(playerIndex).getOwnedProperty(offer.get(i)));
 		}
 		tradeSelected = false;
+		tradeStage = 0;
+		offer.clear();
+		offer2.clear();
 	}
 	
 	private void drawTradeConfirmMenu(Graphics2D g){
@@ -710,10 +727,11 @@ public class MainState extends GameState {
 		g.drawString("Confirm", 440, 382);
 	}
 
+	
 	private void roll(){
 		if(canRoll){
-			dice1 = 0;//dice.nextInt(6) + 1;
-			dice2 = 1;//dice.nextInt(6) + 1;
+			dice1 = dice.nextInt(6) + 1;
+			dice2 = dice.nextInt(6) + 1;
 			int newPosition = players.get(currentPlayer).getPosition() + dice1 + dice2;
 			if(newPosition > 39){
 				newPosition = newPosition - 39;
@@ -1076,7 +1094,7 @@ public class MainState extends GameState {
 	private void mortgageTheProperties(){
 		for(int i = 0; i < mortgagingPropList.size(); i++){
 			players.get(currentPlayer).getOwnedProperty(tradeChoices[mortgagingPropList.get(i)]).mortgage(players.get(currentPlayer));
-			players.get(currentPlayer).removeProperty(players.get(currentPlayer).getOwnedProperty(tradeChoices[mortgagingPropList.get(i)]).getName());
+			players.get(currentPlayer).removeProperty(players.get(currentPlayer).getOwnedProperty(tradeChoices[mortgagingPropList.get(i)]));
 		}
 		
 		mortgagingPropList.clear();
