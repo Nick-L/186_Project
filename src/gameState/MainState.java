@@ -33,7 +33,7 @@ public class MainState extends GameState {
 	private boolean mortgaging = false;
 	private boolean buyingHouses = false;
 	private boolean cardDrawn = false;
-	private String[] mainChoices = new String[] {"Roll", "Buy Property", "Morgage", "Trade", "Buy House", "End Turn"};
+	private String[] mainChoices = new String[] {"Roll", "Buy Property", "Mortgage", "Trade", "Buy House", "End Turn"};
 	private String[] tradeChoices;
 	private String[] tradeChoices2;
 	private Font buttonFont = new Font("Arial", Font.BOLD, 20);
